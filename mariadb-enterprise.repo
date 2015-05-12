@@ -1,0 +1,6 @@
+[mariadb-enterprise-10.0]
+name = MariaDB Enterprise
+baseurl = http://code.mariadb.com/mariadb-enterprise/10.0/yum/rhel/$releasever/$basearch
+gpgkey = https://code.mariadb.com/files/MariaDB/RPM-GPG-KEY-MariaDB-Ent
+gpgcheck = 1
+enabled = 1

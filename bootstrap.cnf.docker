@@ -1,0 +1,9 @@
+# This config file is used to support bootstrap during
+# deploying of the MariaDB Enterprise Docker image.
+[server]
+user=mysql
+skip-innodb
+default-storage-engine=myisam
+log-warnings=0
+skip-server_audit
+bootstrap
