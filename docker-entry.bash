@@ -21,6 +21,14 @@ if [[ "$init_cmds" ]]; then
 	#|| exit
 fi
 
+mypass=$(dd if=/dev/urandom bs=1 count=15 2>/dev/null | base64)
+
+cat <<EoCNF > ~/.my.cnf
+[client]
+user=root
+password=$mypass
+EoCNF
+
 exec mysqld "$@"
 
 # There should be no chance of arriving here, but if we get sucked into a 
