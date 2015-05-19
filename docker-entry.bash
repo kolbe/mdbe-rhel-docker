@@ -1,35 +1,43 @@
 #!/bin/bash
 
-# Originally I was setting the root password using environment variables,
-# as is done by the MariaDB/MySQL images on Docker Hub, but that's a huge
-# security problem. The environment variable is accessible to any process
-# or user on the container, as well as by any linked containers. This is
-# an unacceptable security risk, so we will not support the use of ENV
-# variables for any sensitive data.
+# mariadb_random_root_password / MARIADB_RANDOM_ROOT_PASSWORD
+# Default: 1
+# Generate random password for root user? Otherwise it's blank.
+mariadb_random_root_password=${mariadb_random_root_password:-$MARIADB_RANDOM_ROOT_PASSWORD}
+mariadb_random_root_password=${mariadb_random_root_password:-1}
 
-# But maybe we want to support something else later in --init-file, so I'm
-# keeping this skeleton around Just In Case.
-
+# This init_cmds thing is leftover from my previous attempt to use --init-file to set the root
+# password. That didn't work out when starting mysqld as root using --user=mysql, which may be
+# necessary to use external volumes. I'm leaving it in case it has some use later.
 init_cmds=()
 
-# printf '%s;\n' "${init_cmds[@]}"
+printf %s\\n '[client]' 'user=root' >> ~/.my.cnf
 
-if [[ "$init_cmds" ]]; then
-	exec mysqld "$@" --init-file=<(printf '%s;\n' "${init_cmds[@]}")
-	#printf '%s;\n' "${init_cmds[@]}" \
-	#| mysqld --defaults-extra-file=/etc/my.cnf.d/bootstrap.cnf.docker \
-	#|| exit
+if [[ ! -d /var/lib/mysql/mysql ]]; then
+	mysql_install_db --user=mysql
 fi
 
-mypass=$(dd if=/dev/urandom bs=1 count=15 2>/dev/null | base64)
+# By default, set a random password when the container is executed. The user can use ''docker exec''
+# to invoke command-line tools that will automatically log in as root with the configured password.
+# It's easy to change it like this:
+#   docker exec -ti <container> mysqladmin password newpass
+if ((mariadb_random_root_password)) || [[ ${mariadb_random_root_password,,} = true ]]; then
 
-cat <<EoCNF > ~/.my.cnf
-[client]
-user=root
-password=$mypass
-EoCNF
+	mypass=$(dd if=/dev/urandom bs=1 count=15 2>/dev/null | base64)
 
-exec mysqld "$@"
+	printf %s\\n "UPDATE mysql.user SET password=password('$mypass');" |
+	  mysqld --defaults-extra-file=/etc/my.cnf.d/bootstrap.cnf.docker
+
+	printf password=%s\\n "$mypass" >> ~/.my.cnf
+fi
+
+# As above, this init_cmds logic originally existed to support setting the password. It stays
+# in case it's of use later for setting something else.
+if ((${#init_cmds[@]})); then
+	exec mysqld "$@" --init-file=<(printf '%s;\n' "${init_cmds[@]}")
+else
+	exec mysqld "$@"
+fi
 
 # There should be no chance of arriving here, but if we get sucked into a 
 # singularity, we may as well exit the script reponsibly.
