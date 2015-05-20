@@ -20,6 +20,7 @@ RUN printf %s\\n \
 "insert into mysql.plugin values ('SEQUENCE', 'ha_sequence.so');" \
 | mysqld --defaults-extra-file=/etc/my.cnf.d/bootstrap.cnf.docker
 
+RUN touch /var/lib/mysql/docker_bootstrap
 VOLUME /var/lib/mysql
 EXPOSE 3306
 
