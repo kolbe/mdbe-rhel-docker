@@ -19,6 +19,9 @@ declare -a bootstrap_cmds
 # necessary to use external volumes. I'm leaving it in case it has some use later.
 declare -a init_cmds
 
+# And setup_cmds is used with mysql_embedded before the server is started.
+declare -a setup_cmds
+
 mariadb_verbose_entry=${mariadb_verbose_entry:-0}
 dbg=$mariadb_verbose_entry
 log() {
@@ -37,7 +40,7 @@ if [[ ! -d /var/lib/mysql/mysql ]] && ((mariadb_init_empty_datadir)); then
 	((dbg)) && log "Initializing datadir"
 	mysql_install_db --user=mysql
 	is_bootstrap=1
-	bootstrap_cmds+=(
+	setup_cmds+=(
 		"delete from mysql.user where user <> 'root'"
 		"delete from mysql.user where host <> 'localhost'"
 		"insert into mysql.plugin values ('SEQUENCE', 'ha_sequence.so')"
@@ -61,7 +64,7 @@ if ((mariadb_random_root_password)) || [[ ${mariadb_random_root_password,,} = tr
 
 	mypass=$(dd if=/dev/urandom bs=1 count=15 2>/dev/null | base64)
 
-	bootstrap_cmds+=("UPDATE mysql.user SET password=password('$mypass')")
+	setup_cmds+=("UPDATE mysql.user SET password=password('$mypass')")
 
 	declare -a my_cnf
 	[[ -e ~/.my.cnf ]] || my_cnf+=('[client]' 'user=root')
@@ -75,6 +78,19 @@ if ((${#bootstrap_cmds[@]})); then
 	((dbg)) && log "Executing bootstrap_cmds"
 	printf '%s;\n' "${bootstrap_cmds[@]}"  |
   mysqld --defaults-extra-file=/etc/my.cnf.d/bootstrap.cnf.docker
+fi
+
+if ((${#setup_cmds[@]})); then
+	((dbg)) && log "Executing setup_cmds"
+	declare -a mysql_embedded_args
+	mysql_embedded_args=( 
+		--server-arg='--skip-innodb' 
+		--server-arg='--default-storage-engine=myisam'
+		)
+	for arg in "${setup_cmds[@]}"; do
+		mysql_embedded_args+=(-e "$arg;")
+	done
+	mysql_embedded "${mysql_embedded_args[@]}"
 fi
 
 # As above, this init_cmds logic originally existed to support setting the password. It stays
