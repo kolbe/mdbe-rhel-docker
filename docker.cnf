@@ -1,0 +1,7 @@
+[server]
+user=mysql
+secure-file-priv=/var/lib/mariadb-load-data
+socket=/var/lib/mariadb-socket/mariadb.sock
+
+[client]
+socket=/var/lib/mariadb-socket/mariadb.sock
