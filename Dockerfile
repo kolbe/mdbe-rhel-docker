@@ -24,7 +24,7 @@ RUN printf %s\\n \
 | mysqld --defaults-extra-file=/etc/my.cnf.d/bootstrap.cnf.docker
 
 RUN touch /var/lib/mysql/docker_bootstrap
-VOLUME /var/lib/mysql /var/run/mariadb /var/lib/mariadb-load-data
+VOLUME /var/lib/mysql /var/lib/mariadb-socket /var/lib/mariadb-load-data
 EXPOSE 3306
 
 # the mysql client complains that TERM is not set

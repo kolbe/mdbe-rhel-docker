@@ -63,7 +63,10 @@ if ((mariadb_random_root_password)) || [[ ${mariadb_random_root_password,,} = tr
 
 	bootstrap_cmds+=("UPDATE mysql.user SET password=password('$mypass')")
 
-	printf %s\\n '[client]' 'user=root' "password=$mypass" >> ~/.my.cnf
+	declare -a my_cnf
+	[[ -e ~/.my.cnf ]] || my_cnf+=('[client]' 'user=root')
+	my_cnf+=("password=$mypass")
+	printf %s\\n "${my_cnf[@]}" >> ~/.my.cnf
 fi
 rm -f /var/lib/mysql/docker_bootstrap
 
