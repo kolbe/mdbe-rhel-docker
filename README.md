@@ -60,12 +60,12 @@ $ sudo -i
 
 The image supports several environment variables (see docker-entry.bash for full details) and several mounted volumes (see Dockerfile for full details).
 
-Note that to use external volumes, it seems that they must be owned by the same uid/gid as the process accessing them inside the container. This has strange results, since the uid/gid on the host may map to different users than in the container. For that reason, I provided functionality in the image to print the uid:gid of the "mysql" user inside the container. This can be used to adjust ownership of the volumes you want to mount. I include that in my example below.
+Note that to use external volumes, it seems that they must be owned by the same uid/gid as the process accessing them inside the container. This has strange results, since the uid/gid on the host may map to different users than in the container. For that reason, I provided a small script in the image to print the uid:gid of the "mysql" user inside the container. Invoke it by overriding the entrypoint of the image to be `print_mysql_uidgid`. The output of that script can then be used to adjust ownership of the volumes you want to mount. I include this in my example below.
 
 Here's an example that uses all of the available volumes:
 ```
 # mkdir -p mariadb-load-data mariadb-datadir mariadb-socket
-# owner=$(docker run --rm -t -e mariadb_print_mysql_uidgid=true docker.mariadb.com/mdbe-rhel | tr -d '\r')
+# owner=$(docker run --rm --entrypoint=print_mysql_uidgid mdbe/mariadb-rhel)
 # chown "$owner" mariadb-load-data mariadb-datadir mariadb-socket
 # chcon -t svirt_sandbox_file_t mariadb-load-data mariadb-datadir mariadb-socket
 
