@@ -64,15 +64,15 @@ Note that to use external volumes, it seems that they must be owned by the same 
 
 Here's an example that uses all of the available volumes:
 ```
-# mkdir -p mariadb-load-data mariadb-datadir mariadb-socket
+# vols=( mariadb-load-data mariadb-datadir mariadb-socket )
+# mkdir -p "${vols[@]}"
 # owner=$(docker run --rm --entrypoint=print_mysql_uidgid mdbe/mariadb-rhel)
-# chown "$owner" mariadb-load-data mariadb-datadir mariadb-socket
-# chcon -t svirt_sandbox_file_t mariadb-load-data mariadb-datadir mariadb-socket
+# chown "$owner" "${vols[@]}"
+# chcon -t svirt_sandbox_file_t "${vols[@]}"
 
 # echo "1,a,2015-05-21" > mariadb-load-data/in.csv
 
-# c=$(docker run -d -v "$PWD"/mariadb-load-data:/var/lib/mariadb-load-data -v "$PWD"/mariadb-datadir:/var/lib/mysql -v "$PWD"/mariadb-socket:/var/lib/mariadb-socket mdbe/mariadb-rhel)# ls mariadb-datadir/
-aria_log.00000001  aria_log_control  ibdata1  ib_logfile0  ib_logfile1  mariadb-bin.000001  mariadb-bin.000002  mariadb-bin.index  mariadb-bin.state  mysql  performance_schema  test
+# c=$(docker run -d -v "$PWD"/mariadb-load-data:/var/lib/mariadb-load-data -v "$PWD"/mariadb-datadir:/var/lib/mysql -v "$PWD"/mariadb-socket:/var/lib/mariadb-socket mdbe/mariadb-rhel)
 
 # ls mariadb-datadir/
 95f29b345719.pid       aria_log.00000001  ibdata1      ib_logfile1         mariadb-bin.000002  mariadb-bin.index  mysql               test
