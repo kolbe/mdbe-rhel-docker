@@ -12,7 +12,7 @@ COPY mariadb-enterprise.repo /etc/yum.repos.d/mariadb-enterprise.repo
 # The MySQL-server RPM also installs a whole bunch of enormous files that are of almost no
 # use in most environments, so we ditch those to save about 150M in our final image.
 #
-# And finally clean the yum caches to same about 100M more.
+# And finally clean the yum caches to save about 100M more.
 #
 RUN mkdir -p /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql/mysql \
     && rpm --import https://downloads.mariadb.com/files/MariaDB/RPM-GPG-KEY-MariaDB-Ent \

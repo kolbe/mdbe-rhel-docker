@@ -2,7 +2,7 @@
 
 timeout=60
 
-socket=$(my_print_defaults server | grep -- --socket | awk -F= "{print $2}")
+socket=$(my_print_defaults server | grep -- --socket | awk -F= '{print $2}')
 [[ $socket ]] || socket=$(mysqld --help --verbose 2>/dev/null | grep '^socket' | awk '{print $2}')
 
 if [[ ! $socket ]]; then
@@ -12,6 +12,7 @@ fi
 
 for ((i=0;i<timeout;i++)); do
    [[ -e $socket ]] && exit
+   sleep 1
 done
 
 echo "[ERROR] timed out after $timeout seconds" >&2
