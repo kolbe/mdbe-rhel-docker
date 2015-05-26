@@ -29,9 +29,10 @@ RUN mkdir -p /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql/m
 COPY bootstrap.cnf.docker /etc/my.cnf.d/
 COPY docker.cnf /etc/my.cnf.d/
 COPY docker-entry.bash /bin/docker-entry
-COPY print_mysql_uidgid.bash /bin/print_mysql_uidgid
+COPY my_print_uidgid.bash /bin/my_print_uidgid
+COPY my_wait_socket.bash /bin/my_wait_socket
 
-RUN chmod 555 /bin/docker-entry /bin/print_mysql_uidgid \
+RUN chmod 555 /bin/docker-entry /bin/my_print_uidgid /bin/my_wait_socket \
     && chown -R mysql:mysql /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql
 
 USER mysql

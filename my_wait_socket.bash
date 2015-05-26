@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+timeout=60
+
+socket=$(my_print_defaults server | grep -- --socket | awk -F= "{print $2}")
+[[ $socket ]] || socket=$(mysqld --help --verbose 2>/dev/null | grep '^socket' | awk '{print $2}')
+
+if [[ ! $socket ]]; then
+    echo "[ERROR] could not determine socket file" >&2
+    exit 1
+fi
+
+for ((i=0;i<timeout;i++)); do
+   [[ -e $socket ]] && exit
+done
+
+echo "[ERROR] timed out after $timeout seconds" >&2
+exit 1
