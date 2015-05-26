@@ -3,8 +3,6 @@
 # Environment variables:
 # mariadb_random_root_password=1 boolean
 #   Generate random password for root user? Otherwise it's blank.
-# mariadb_print_mysql_uidgid=0 boolean
-#   Print uid & gid of mysql user and exit?
 # mariadb_init_empty_datadir=1 boolean
 #   Initialize empty datadir, or leave it alone?
 # mariadb_verbose_entry=0 boolean
@@ -27,10 +25,6 @@ dbg=$mariadb_verbose_entry
 log() {
 	printf '%s\n' "$@" >&2
 }
-
-if ((mariadb_print_mysql_uidgid)) || [[ ${mariadb_print_mysql_uidgid,,} = true ]]; then
-	exec awk -F: '$1=="mysql"{printf "%d:%d\n",$3,$4}' /etc/passwd
-fi
 
 mariadb_init_empty_datadir=${mariadb_init_empty_datadir:-1}
 [[ ${mariadb_init_empty_datadir,,} = true ]] && mariadb_init_empty_datadir=1
