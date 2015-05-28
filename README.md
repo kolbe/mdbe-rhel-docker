@@ -52,7 +52,7 @@ $ sudo docker build -t mdbe/mariadb-rhel .
 ```
 $ sudo -i
 # c=$(docker run -d mdbe/mariadb-rhel)
-  (wait several seconds for the image to initialize)
+# docker exec "$c" my_wait_socket
 # docker exec -ti "$c" mysql
 ```
 
@@ -60,19 +60,19 @@ $ sudo -i
 
 The image supports several environment variables (see docker-entry.bash for full details) and several mounted volumes (see Dockerfile for full details).
 
-Note that to use external volumes, it seems that they must be owned by the same uid/gid as the process accessing them inside the container. This has strange results, since the uid/gid on the host may map to different users than in the container. For that reason, I provided a small script in the image to print the uid:gid of the "mysql" user inside the container. Invoke it by overriding the entrypoint of the image to be `print_mysql_uidgid`. The output of that script can then be used to adjust ownership of the volumes you want to mount. I include this in my example below.
+Note that to use external volumes, it seems that they must be owned by the same uid/gid as the process accessing them inside the container. This has strange results, since the uid/gid on the host may map to different users than in the container. For that reason, I provided a small script in the image to print the uid:gid of the "mysql" user inside the container. Invoke it by overriding the entrypoint of the image to be `my_print_uidgid`. The output of that script can then be used to adjust ownership of the volumes you want to mount. I include this in my example below.
 
 Here's an example that uses all of the available volumes:
 ```
-# vols=( mariadb-load-data mariadb-datadir mariadb-socket )
-# mkdir -p "${vols[@]}"
-# owner=$(docker run --rm --entrypoint=print_mysql_uidgid mdbe/mariadb-rhel)
-# chown "$owner" "${vols[@]}"
-# chcon -t svirt_sandbox_file_t "${vols[@]}"
+# mkdir -p mariadb-load-data mariadb-datadir mariadb-socket
+# owner=$(docker run --rm --entrypoint=my_print_uidgid mdbe/mariadb-rhel)
+# chown "$owner" mariadb-load-data mariadb-datadir mariadb-socket
+# chcon -t svirt_sandbox_file_t mariadb-load-data mariadb-datadir mariadb-socket
 
 # echo "1,a,2015-05-21" > mariadb-load-data/in.csv
 
-# c=$(docker run -d -v "$PWD"/mariadb-load-data:/var/lib/mariadb-load-data -v "$PWD"/mariadb-datadir:/var/lib/mysql -v "$PWD"/mariadb-socket:/var/lib/mariadb-socket mdbe/mariadb-rhel)
+# c=$(docker run -d -v "$PWD"/mariadb-load-data:/var/lib/mariadb-load-data -v "$PWD"/mariadb-datadir:/var/lib/mysql -v "$PWD"/mariadb-socket:/var/lib/mariadb-socket mdbe/mariadb-rhel)# ls mariadb-datadir/
+aria_log.00000001  aria_log_control  ibdata1  ib_logfile0  ib_logfile1  mariadb-bin.000001  mariadb-bin.000002  mariadb-bin.index  mariadb-bin.state  mysql  performance_schema  test
 
 # ls mariadb-datadir/
 95f29b345719.pid       aria_log.00000001  ibdata1      ib_logfile1         mariadb-bin.000002  mariadb-bin.index  mysql               test
