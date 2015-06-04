@@ -2,17 +2,15 @@
 
 ## Design decisions
 
-I wanted to avoid the use of an environment variable to set the root password. It has several important security problems:
+Many MySQL/MariaDB Docker images use environment variables to set root passwords, but that has several important security implications:
 * The root password is part of the image's metadata forever
 * The root password is in the environment of every process running on the container
 * The root passwors is in the environment of every process running on a linked container
-* Requires an administrator to generate a high-quality password
-
-And of course the aesthetic problem that environment variables are ugly and upper-case ones even moreso.
+* This requires an administrator to generate a high-quality password
 
 My solution is instead to generate (by default) a random root password and allow only localhost connections. It's easy to retrieve and change the root password. 
 
-I support several volumes in my Dockerfile:
+Several volumes are supported by this Docker image:
 * `/var/lib/mysql`
 * `/var/lib/mariadb-socket`
 * `/var/lib/mariadb-load-data`
@@ -20,30 +18,30 @@ I support several volumes in my Dockerfile:
 
 ## Building image
 
-* Create RHEL7 VM on [AWS](https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2) and do SSH-login to it;
-* Set up an entitlement for RHEL (get credentials from Kolbe):
+* Acquire a RHEL7 or CentOS7 VM/host/environment
+    * Set up an entitlement for RHEL if using RHEL instead of CentOS (the entitlements baked into EC2 images are broken as of May 2015):
 
-```
-$ sudo subscription-manager register
-$ sudo subscription-manager attach --pool=8a85f9814d0bf2ce014d3505ac3e52e2
-$ sudo subscription-manager repos --enable=rhel-7-server-extras-rpms
-$ subscription-manager repos --enable=rhel-7-server-optional-rpms
-```
+        ```
+        $ sudo subscription-manager register
+        $ sudo subscription-manager attach --pool=8a85f9814d0bf2ce014d3505ac3e52e2
+        $ sudo subscription-manager repos --enable=rhel-7-server-extras-rpms
+        $ subscription-manager repos --enable=rhel-7-server-optional-rpms
+        ```
 
 * Install prepequisites and start docker service:
 
-```
-$ sudo yum install docker git -y
-$ sudo service docker start
-```
+    ```
+    $ sudo yum install docker git -y
+    $ sudo service docker start
+    ```
 
 * Clone [MariaDB docker repository](https://github.com/mariadb-corporation/mariadb-enterprise-docker) and build Docker image:
 
-```
-$ git clone https://github.com/mariadb-corporation/mariadb-enterprise-docker.git
-$ cd mariadb-enterprise-docker/mdbe-rhel/
-$ sudo docker build -t mdbe/mariadb-rhel .
-```
+    ```
+    $ git clone https://github.com/mariadb-corporation/mariadb-enterprise-docker.git
+    $ cd mariadb-enterprise-docker/mdbe-rhel/
+    $ sudo docker build -t mdbe/mariadb-rhel .
+    ```
 
 ## Running a container from the image
 

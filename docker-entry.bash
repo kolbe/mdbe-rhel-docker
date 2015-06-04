@@ -20,16 +20,29 @@ declare -a init_cmds
 # And setup_cmds is used with mysql_embedded before the server is started.
 declare -a setup_cmds
 
-mariadb_verbose_entry=${mariadb_verbose_entry:-0}
+# mariadb_verbose_entry / MARIADB_VERBOSE_ENTRY
+# Default: 0 for quiet startup, 1 for verbose logging
+mariadb_verbose_entry=${mariadb_verbose_entry:-$MARIADB_VERBOSE_ENTRY}
+case ${mariadb_verbose_entry,,} in 
+    true|1)  mariadb_verbose_entry=1;;
+         *)  mariadb_verbose_entry=0;;
+esac
 dbg=$mariadb_verbose_entry
+
 log() {
 	printf '%s\n' "$@" >&2
 }
 
-mariadb_init_empty_datadir=${mariadb_init_empty_datadir:-1}
-[[ ${mariadb_init_empty_datadir,,} = true ]] && mariadb_init_empty_datadir=1
+# mariadb_init_empty_datadir / MARIADB_INIT_EMPTY_DATADIR
+# Default: 1 to init, 0 to leave it empty/alone
+mariadb_init_empty_datadir=${mariadb_init_empty_datadir:-$MARIADB_INIT_EMPTY_DATADIR}
+case ${mariadb_init_empty_datadir,,} in
+    false|0) mariadb_init_empty_datadir=0;;
+          *) mariadb_init_empty_datadir=1;;
+esac
 
-# If mysql database is missing from datadir, we run mysql_install_db
+# If mysql database is missing from datadir, we run mysql_install_db unless someone has 
+# explicitly set mariadb_init_empty_datadir=0
 if [[ ! -d /var/lib/mysql/mysql ]] && ((mariadb_init_empty_datadir)); then
 	((dbg)) && log "Initializing datadir"
 	mysql_install_db --user=mysql
@@ -37,6 +50,7 @@ if [[ ! -d /var/lib/mysql/mysql ]] && ((mariadb_init_empty_datadir)); then
 	setup_cmds+=(
 		"delete from mysql.user where user <> 'root'"
 		"delete from mysql.user where host <> 'localhost'"
+                "delete from mysql.db"
 		"insert into mysql.plugin values ('SEQUENCE', 'ha_sequence.so')"
 		)
 fi
@@ -47,23 +61,27 @@ fi
 # Default: 1 if we're bootstrapping, otherwise 0
 mariadb_random_root_password=${mariadb_random_root_password:-$MARIADB_RANDOM_ROOT_PASSWORD}
 ((is_bootstrap)) && mariadb_random_root_password=${mariadb_random_root_password:-1}
-mariadb_random_root_password=${mariadb_random_root_password:-0}
+case ${mariadb_random_root_password,,} in
+    true|1) mariadb_random_root_password=1;;
+         *) mariadb_random_root_password=0;;
+esac
+
 
 # By default, set a random password when the container is executed. The user can use ''docker exec''
 # to invoke command-line tools that will automatically log in as root with the configured password.
 # It's easy to change it like this:
 #   docker exec -ti <container> mysqladmin password newpass
-if ((mariadb_random_root_password)) || [[ ${mariadb_random_root_password,,} = true ]]; then
+if ((mariadb_random_root_password)); then
 	((dbg)) && log "Setting random root password"
 
 	mypass=$(dd if=/dev/urandom bs=1 count=15 2>/dev/null | base64)
 
-	setup_cmds+=("UPDATE mysql.user SET password=password('$mypass')")
+	setup_cmds+=("UPDATE mysql.user SET password=password('$mypass') WHERE user='root'")
 
 	declare -a my_cnf
-	[[ -e ~/.my.cnf ]] || my_cnf+=('[client]' 'user=root')
+	[[ -e .my.cnf ]] || my_cnf+=('[client]' 'user=root')
 	my_cnf+=("password=$mypass")
-	printf %s\\n "${my_cnf[@]}" >> ~/.my.cnf
+	printf %s\\n "${my_cnf[@]}" >> .my.cnf
 fi
 rm -f /var/lib/mysql/docker_bootstrap
 

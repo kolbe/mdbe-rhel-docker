@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel
+FROM centos:7
 MAINTAINER Kolbe Kegel <kolbe@mariadb.com>
 
 USER root
@@ -14,9 +14,9 @@ COPY mariadb-enterprise.repo /etc/yum.repos.d/mariadb-enterprise.repo
 #
 # And finally clean the yum caches to save about 100M more.
 #
-RUN mkdir -p /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql/mysql \
+RUN mkdir -p /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql/mysql /home/mariadb \
     && rpm --import https://downloads.mariadb.com/files/MariaDB/RPM-GPG-KEY-MariaDB-Ent \
-    && yum update \
+    && yum -y update \
     && yum -y install MariaDB-server hostname \
     && rmdir /var/lib/mysql/mysql \
     && rm /usr/lib64/libmysqld.so* \
@@ -24,7 +24,8 @@ RUN mkdir -p /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql/m
           /usr/lib64/mysql/plugin/ha_mroonga.so \
           /usr/lib64/mysql/plugin/ha_tokudb.so \
           /usr/lib64/mysql/plugin/ha_innodb.so \
-    && yum clean all 
+    && yum clean all  \
+    && usermod -d /home/mariadb mysql
 
 COPY bootstrap.cnf.docker /etc/my.cnf.d/
 COPY docker.cnf /etc/my.cnf.d/
@@ -33,10 +34,10 @@ COPY my_print_uidgid.bash /bin/my_print_uidgid
 COPY my_wait_socket.bash /bin/my_wait_socket
 
 RUN chmod 555 /bin/docker-entry /bin/my_print_uidgid /bin/my_wait_socket \
-    && chown -R mysql:mysql /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql
+    && chown -R mysql:mysql /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql /home/mariadb
 
 USER mysql
-WORKDIR /var/lib/mysql
+WORKDIR /home/mariadb
 
 VOLUME /var/lib/mysql /var/lib/mariadb-socket /var/lib/mariadb-load-data
 EXPOSE 3306
