@@ -29,11 +29,11 @@ RUN mkdir -p /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql/m
 
 COPY bootstrap.cnf.docker /etc/my.cnf.d/
 COPY docker.cnf /etc/my.cnf.d/
-COPY docker-entry.bash /bin/docker-entry
+COPY docker-entry.bash /bin/mariadb-enterprise-server
 COPY my_print_uidgid.bash /bin/my_print_uidgid
 COPY my_wait_socket.bash /bin/my_wait_socket
 
-RUN chmod 555 /bin/docker-entry /bin/my_print_uidgid /bin/my_wait_socket \
+RUN chmod 555 /bin/mariadb-enterprise-server /bin/my_print_uidgid /bin/my_wait_socket \
     && chown -R mysql:mysql /var/lib/mariadb-socket /var/lib/mariadb-load-data /var/lib/mysql /home/mariadb
 
 USER mysql
@@ -45,4 +45,4 @@ EXPOSE 3306
 # the mysql client complains that TERM is not set
 ENV TERM dumb
 
-ENTRYPOINT ["/bin/docker-entry"]
+ENTRYPOINT ["mariadb-enterprise-server"]
